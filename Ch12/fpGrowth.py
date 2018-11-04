@@ -153,10 +153,10 @@ def mineTweets(tweetArr, minSup=5):
     mineTree(myFPtree, myHeaderTab, minSup, set([]), myFreqList)
     return myFreqList
 
-#minSup = 3
-#simpDat = loadSimpDat()
-#initSet = createInitSet(simpDat)
-#myFPtree, myHeaderTab = createTree(initSet, minSup)
-#myFPtree.disp()
-#myFreqList = []
-#mineTree(myFPtree, myHeaderTab, minSup, set([]), myFreqList)
+minSup = 3
+simpDat = loadSimpDat()
+initSet = createInitSet(simpDat)
+myFPtree, myHeaderTab = createTree(initSet, minSup)
+myFPtree.disp()
+myFreqList = []
+mineTree(myFPtree, myHeaderTab, minSup, set([]), myFreqList)

@@ -12,7 +12,7 @@ from os import listdir
 
 
 def openFile():
-    fr = open("linear_data")
+    fr = open("linear")
     arrayOLines = fr.readlines()
     returnMat = zeros((len(arrayOLines), 2))
     for index in range(len(arrayOLines)):
