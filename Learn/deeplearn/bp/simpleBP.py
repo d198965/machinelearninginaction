@@ -75,7 +75,29 @@ def forward_propagation(X, parameters):
 
     # Implement Forward Propagation to calculate A2 (probabilities)
     Z1 = np.dot(W1, X) + b1
-    A1 = np.tanh(Z1)
+    A1 = np.tanh(Z1) # 双曲正切函数 A1的导数=1-np.power(A1,2)
+    Z2 = np.dot(W2, A1) + b2
+    A2 = sigmoid(Z2)
+
+    assert (A2.shape == (1, X.shape[1]))
+
+    cache = {"Z1": Z1,
+             "A1": A1,
+             "Z2": Z2,
+             "A2": A2}
+
+    return A2, cache
+
+def forward_propagation1(X, parameters):
+    # Retrieve each parameter from the dictionary "parameters"
+    W1 = parameters["W1"]
+    b1 = parameters["b1"]
+    W2 = parameters["W2"]
+    b2 = parameters["b2"]
+
+    # Implement Forward Propagation to calculate A2 (probabilities)
+    Z1 = np.dot(W1, X) + b1
+    A1 = sigmoid(Z1)
     Z2 = np.dot(W2, A1) + b2
     A2 = sigmoid(Z2)
 
@@ -115,10 +137,37 @@ def backward_propagation(parameters, cache, X, Y):
     A2 = cache["A2"]
 
     # Backward propagation: calculate dW1, db1, dW2, db2.
-    dZ2 = A2 - Y
-    dW2 = np.dot(dZ2, A1.T) / m  # 没有考虑sigmod变换
+    dZ2 = (A2 - Y) #* A2 * (1 - A2)
+    dW2 = np.dot(dZ2, A1.T) / m
     db2 = np.sum(dZ2, axis=1, keepdims=True) / m
-    dZ1 = np.dot(W2.T, dZ2) * (1 - np.power(A1, 2))
+    dZ1 = np.dot(W2.T, dZ2) * (1 - np.power(A1, 2)) #双曲正切函数np.tanh的导数
+    dW1 = np.dot(dZ1, X.T) / m
+    db1 = np.sum(dZ1, axis=1, keepdims=True) / m
+
+    grads = {"dW1": dW1,
+             "db1": db1,
+             "dW2": dW2,
+             "db2": db2}
+
+    return grads
+
+def backward_propagation1(parameters, cache, X, Y):
+    m = X.shape[1]
+
+    # First, retrieve W1 and W2 from the dictionary "parameters".
+    W1 = parameters["W1"]
+    W2 = parameters["W2"]
+
+    # Retrieve also A1 and A2 from dictionary "cache".
+    A1 = cache["A1"]
+    A2 = cache["A2"]
+
+    # Backward propagation: calculate dW1, db1, dW2, db2.
+    dZ2 = A2 - Y
+    dGj = dZ2 #* A2 * (1 - A2)
+    dW2 = np.dot(dGj, A1.T) / m
+    db2 = np.sum(dGj, axis=1, keepdims=True) / m
+    dZ1 = np.dot(W2.T, dGj) * A1 * (1 - A1)
     dW1 = np.dot(dZ1, X.T) / m
     db1 = np.sum(dZ1, axis=1, keepdims=True) / m
 
@@ -170,11 +219,11 @@ def nn_model(X, Y, n_h, num_iterations=10000, print_cost=False):
     b2 = parameters["b2"]
 
     for i in range(0, num_iterations):
-        A2, cache = forward_propagation(X, parameters)
+        A2, cache = forward_propagation1(X, parameters)
 
         cost = compute_cost(A2, Y, parameters)
 
-        grads = backward_propagation(parameters, cache, X, Y)
+        grads = backward_propagation1(parameters, cache, X, Y)
 
         parameters = update_parameters(parameters, grads)
 
@@ -186,7 +235,7 @@ def nn_model(X, Y, n_h, num_iterations=10000, print_cost=False):
 
 
 def predict(parameters, X):
-    A2, cache = forward_propagation(X, parameters)
+    A2, cache = forward_propagation1(X, parameters)
     predictions = (A2 > 0.5)  # A2矩阵中大于0.5的元素会被转为True,否则转为False
 
     return predictions
@@ -204,6 +253,6 @@ plt.show()
 # Print accuracy
 predictions = predict(parameters, X)
 print (
-'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
+    'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
 
 loadData()
