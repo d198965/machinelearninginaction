@@ -132,6 +132,6 @@ def readHorese(fileName):
     return returnMat0, returnMat1
 
 
-# calculate()
-calculateHorese()
+calculate()
+# calculateHorese()
 #

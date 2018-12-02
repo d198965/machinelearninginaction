@@ -96,7 +96,7 @@ def adbTest():
     allMat, labelMat = readHorese("horseColicTraining.txt")
     resultTrees = gbdtClassify(allMat, labelMat, 1, 0, 1, 20)
 
-    allTestMat, labelTestMat = readHorese("horseColicTest.txt")
+    allTestMat, labelTestMat = readHorese("horseColicTraining.txt")
     m, n = shape(allTestMat)
     resultClassify = zeros((m, 1))
     for i in range(len(resultTrees)):

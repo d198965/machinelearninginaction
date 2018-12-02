@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.matlib import zeros
 from testCases import *
 import sklearn
 import sklearn.datasets
@@ -35,6 +36,48 @@ def loadData():
     # plt.show()
 
     return X, Y
+
+
+def loadLineData():
+    # fr = open("testSet.txt")
+    fr = open("svmTestData.txt")
+    arrayOLines = fr.readlines()
+    returnMat = []
+    labelMat = []
+    for index in range(len(arrayOLines)):
+        line = arrayOLines[index]
+        datas = line.strip('\n').replace(',', '').replace('\t', ' ').split(' ')
+        temData = []
+        temData.append(float(datas[0]))
+        temData.append(float(datas[1]))
+        returnMat.append(temData)
+        if int(datas[2]) != 1:
+            labelMat.append([0])
+        else:
+            labelMat.append([1])
+    return np.array(returnMat).T, np.array(labelMat).T
+
+
+def readHorese(fileName):
+    fr = open(fileName)
+    arrayOLines = fr.readlines()
+    lineSplit = arrayOLines[0].strip('\n').replace(',', '').replace('\t', ' ').split(' ')
+    column = len(lineSplit) - 1
+    returnMat = []
+    labelMat = []
+    for index in range(len(arrayOLines)):
+        line = arrayOLines[index]
+        datas = line.strip('\n').replace(',', '').replace('\t', ' ').split(' ')
+        newRow = []
+        for index in range(len(datas) - 1):
+            newRow.append(float(datas[index]))
+        returnMat.append(newRow)
+        if float(datas[column]) == 0:
+            labelMat.append([0])
+        else:
+            labelMat.append([1])
+
+    return np.array(returnMat).T, np.array(labelMat).T
 
 
 def layer_sizes(X, Y):
@@ -75,7 +118,7 @@ def forward_propagation(X, parameters):
 
     # Implement Forward Propagation to calculate A2 (probabilities)
     Z1 = np.dot(W1, X) + b1
-    A1 = np.tanh(Z1) # 双曲正切函数 A1的导数=1-np.power(A1,2)
+    A1 = np.tanh(Z1)  # 双曲正切函数 A1的导数=1-np.power(A1,2)
     Z2 = np.dot(W2, A1) + b2
     A2 = sigmoid(Z2)
 
@@ -87,6 +130,7 @@ def forward_propagation(X, parameters):
              "A2": A2}
 
     return A2, cache
+
 
 def forward_propagation1(X, parameters):
     # Retrieve each parameter from the dictionary "parameters"
@@ -137,10 +181,10 @@ def backward_propagation(parameters, cache, X, Y):
     A2 = cache["A2"]
 
     # Backward propagation: calculate dW1, db1, dW2, db2.
-    dZ2 = (A2 - Y) #* A2 * (1 - A2)
+    dZ2 = (A2 - Y)  # * A2 * (1 - A2)
     dW2 = np.dot(dZ2, A1.T) / m
     db2 = np.sum(dZ2, axis=1, keepdims=True) / m
-    dZ1 = np.dot(W2.T, dZ2) * (1 - np.power(A1, 2)) #双曲正切函数np.tanh的导数
+    dZ1 = np.dot(W2.T, dZ2) * (1 - np.power(A1, 2))  # 双曲正切函数np.tanh的导数
     dW1 = np.dot(dZ1, X.T) / m
     db1 = np.sum(dZ1, axis=1, keepdims=True) / m
 
@@ -150,6 +194,7 @@ def backward_propagation(parameters, cache, X, Y):
              "db2": db2}
 
     return grads
+
 
 def backward_propagation1(parameters, cache, X, Y):
     m = X.shape[1]
@@ -164,7 +209,7 @@ def backward_propagation1(parameters, cache, X, Y):
 
     # Backward propagation: calculate dW1, db1, dW2, db2.
     dZ2 = A2 - Y
-    dGj = dZ2 #* A2 * (1 - A2)
+    dGj = dZ2 * A2 * (1 - A2)
     dW2 = np.dot(dGj, A1.T) / m
     db2 = np.sum(dGj, axis=1, keepdims=True) / m
     dZ1 = np.dot(W2.T, dGj) * A1 * (1 - A1)
@@ -221,14 +266,13 @@ def nn_model(X, Y, n_h, num_iterations=10000, print_cost=False):
     for i in range(0, num_iterations):
         A2, cache = forward_propagation1(X, parameters)
 
-        cost = compute_cost(A2, Y, parameters)
-
         grads = backward_propagation1(parameters, cache, X, Y)
 
         parameters = update_parameters(parameters, grads)
 
         # Print the cost every 1000 iterations
         if print_cost and i % 1000 == 0:
+            cost = compute_cost(A2, Y, parameters)
             print ("Cost after iteration %i: %f" % (i, cost))
 
     return parameters
@@ -241,18 +285,26 @@ def predict(parameters, X):
     return predictions
 
 
-X, Y = loadData()
-# Build a model with a n_h-dimensional hidden layer
-parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+# X, Y = loadLineData()
+# parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+
+# X, Y = loadData()
+# parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+
+X, Y = readHorese('horseColicTraining.txt')
+parameters = nn_model(X, Y, n_h=30, num_iterations=10000, print_cost=True)
+X, Y = readHorese('horseColicTest.txt')
 
 # Plot the decision boundary
-plt.figure(1)
-plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
-plt.title("Decision Boundary for hidden layer size " + str(4))
-plt.show()
+# loadLineData() 和 loadData()可用
+# plt.figure(1)
+# plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
+# plt.title("Decision Boundary for hidden layer size " + str(4))
+# plt.show()
+
 # Print accuracy
 predictions = predict(parameters, X)
+print (np.dot(1 - Y, predictions.T))
+print (np.dot(Y, 1 - predictions.T))
 print (
-    'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
-
-loadData()
+'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
