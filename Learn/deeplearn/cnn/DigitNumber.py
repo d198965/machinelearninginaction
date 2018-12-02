@@ -27,7 +27,8 @@ KEY_B4 = "b4"
 KEY_W5 = "w5"
 KEY_B5 = "b5"
 
-def update_parameters(parameters, grads, learning_rate=0.005):
+
+def update_parameters(parameters, grads, learning_rate=1.0):
     # Retrieve each parameter from the dictionary "parameters"
     W1 = parameters[KEY_W1]
     b1 = parameters[KEY_B1]
@@ -79,7 +80,7 @@ def update_parameters(parameters, grads, learning_rate=0.005):
 
 
 def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
-    m = X.shape[1]
+    m = X.shape[0]
 
     # First, retrieve W1 and W2 from the dictionary "parameters".
     W1 = parameters[KEY_W1]
@@ -90,6 +91,7 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
     B3 = parameters[KEY_B3]
     W4 = parameters[KEY_W4]
     W5 = parameters[KEY_W5]
+    b4 = parameters[KEY_B4]
 
     # Retrieve also A1 and A2 from dictionary "cache".
     A1 = cache["A1"]
@@ -101,14 +103,15 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
     O3 = cache["O3"]
     S2 = cache["S2"]
     C1 = cache["C1"]
+    Z1 = cache["Z1"]
 
     # Backward propagation: calculate dW1, db1, dW2, db2.
 
     # 计算输出-隐藏层反向参数
     dZ7 = (A2 - YLabel.T)
     # dGj = dZ7 * A2 * (1 - A2)
-    dGj = dZ7
-    dW5 = np.dot(dGj, A1.T) / m
+    # dGj = dZ7
+    dW5 = np.dot(dZ7, A1.T) / m
     db5 = np.sum(dZ7, axis=1, keepdims=True) / m
 
     # 计算隐藏层-C5反向参数 120*84
@@ -130,8 +133,8 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
                     ddDW3 = temSample * dZ5[index][j]
                 else:
                     ddDW3 += temSample * dZ5[index][j]
-            temDW3.append(ddDW3)
-        temDB3 = sum(dZ5[index])
+            temDW3.append(ddDW3 / m)
+        temDB3 = sum(dZ5[index] / m)
         dW3.append(temDW3)
         dB3.append(np.array([temDB3]))
 
@@ -143,8 +146,8 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
     for index in range(0, len(S4[0])):  # 一共16层
         temDS4 = np.zeros((5, 5))
         for k in range(0, len(dZ5)):  # 每个元素被120次卷积运算
-            temDS4 += sum(dZ5[k]) * FZ(W3[k][index])
-        dS4.append(temDS4)
+            temDS4 += sum(dZ5[k] / m) * FZ(W3[k][index])
+        dS4.append(temDS4 / len(dZ5))
 
     # 计算C3-S2的反向参数
     # 计算dC3(16*10*10)
@@ -171,7 +174,7 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
         for index in range(0, len(K3)):  # 一共16层
             temOrigin += K3[index][j]
         dW2.append(conv(dC3[j], 0, temOrigin / len(K3)))
-        dB2.append(np.array([sum(dC3[j]) * 4]))
+        dB2.append(np.array([sum(dC3[j])]))
 
     dS2 = []  # 6*14*14
     for i in range(0, len(O3)):
@@ -181,13 +184,12 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
         for j in range(0, len(temC3List)):
             temC3Index = temC3List[j]
             temDS2 += conv(FZ(W2[temC3Index]), 0, dEC3[temC3Index])
-        dS2.append(temDS2)
+        dS2.append(temDS2 / len(temC3List))
 
     # 计算S2-C1的反向参数
     dC1 = []
     for i in range(0, len(O3)):
         temOrigin = np.zeros((28, 28))
-        temDC1 = dS2[i]
         for index in range(0, 28):
             for j in range(0, 28):
                 temOrigin[index][j] = dS2[i][index / 2][j / 2] / 4
@@ -199,6 +201,21 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
     for n in range(len(dC1)):
         dW1.append(conv(dC1[n], 0, sumX))
         dB1.append(np.array([sum(dC1[n])]))
+
+    # print "dW1",dW1[2]
+    # print "dS4",dS4
+    # print "dC3",dC3
+    # print "dS2",dS2[0]
+    # print "dW3", dW3[3][0]
+    # print "dW2", dW2[2]
+    # print "dW1", dW1[2]
+    # print "dW4", dW4
+    # print "W4", W4
+    # print "b4",b4
+    # print "W5", W5
+    # print "Z1", Z1
+    # print "C5", C5
+    # print "dW5",dW5[3]
 
     grads = {
         "db1": dB1,
@@ -241,7 +258,9 @@ def FZ(mat):
 def fz(a):
     return a[::-1]
 
-def convWork(parameters, queue, X, firtstConvCount, secondConvCount, thirdConvCount, forthConvCount, sampleSize):
+
+def convWork(parameters, queueIndex, queue, X, firtstConvCount, secondConvCount, thirdConvCount, forthConvCount,
+             sampleSize):
     W1 = parameters[KEY_W1]
     b1 = parameters[KEY_B1]
     W2 = parameters[KEY_W2]
@@ -257,7 +276,6 @@ def convWork(parameters, queue, X, firtstConvCount, secondConvCount, thirdConvCo
     temC5 = []
     O3 = {}
 
-    startTime = datetime.datetime.now()
     # 卷积(5*5)
     for covIndex in range(0, firtstConvCount):
         temC1.append(conv(W1[covIndex], b1[covIndex], X))
@@ -303,8 +321,6 @@ def convWork(parameters, queue, X, firtstConvCount, secondConvCount, thirdConvCo
         if len(temC3) == secondConvCount:
             break
 
-    endTime2 = datetime.datetime.now()
-
     # 采样(2*2)
     for index in range(0, secondConvCount):
         temS4.append(aveSample(sampleSize, temC3[index]))
@@ -317,9 +333,7 @@ def convWork(parameters, queue, X, firtstConvCount, secondConvCount, thirdConvCo
                 oneLeaf = conv(W3[index][i], b3[index], temS4[i])
             else:
                 oneLeaf += conv(W3[index][i], b3[index], temS4[i])
-        temC5.append(oneLeaf[0][0][0])
-
-    endTime3 = datetime.datetime.now()
+        temC5.append(oneLeaf[0][0][0] / len(temS4))
 
     result = []
     result.append(temC1)
@@ -329,9 +343,11 @@ def convWork(parameters, queue, X, firtstConvCount, secondConvCount, thirdConvCo
     result.append(temS4)
     result.append(temC5)
     result.append(O3)
+    result.append(queueIndex)
     queue.put(result)
 
 
+constFenM = 10
 def forward_propagation(X, firtstConvCount, secondConvCount, thirdConvCount, forthConvCount, sampleSize, parameters):
     # Retrieve each parameter from the dictionary "parameters"
     W4 = parameters[KEY_W4]
@@ -351,24 +367,41 @@ def forward_propagation(X, firtstConvCount, secondConvCount, thirdConvCount, for
     queue = Manager().Queue()
     for xIndex in range(0, len(X)):
         pool.apply_async(convWork, args=(
-            parameters, queue, X[xIndex], firtstConvCount, secondConvCount, thirdConvCount, forthConvCount, sampleSize))
+            parameters, xIndex, queue, X[xIndex], firtstConvCount, secondConvCount, thirdConvCount, forthConvCount,
+            sampleSize))
     pool.close()
     pool.join()
 
+    temCount = 0
     while not queue.empty():
         temItem = queue.get()
-        C1.append(temItem[0])
-        S2.append(temItem[1])
-        C3.append(temItem[2])
-        K3.append(temItem[3])
-        S4.append(temItem[4])
-        C5.append(temItem[5])
+        C1.insert(temItem[7], temItem[0])
+        S2.insert(temItem[7], temItem[1])
+        C3.insert(temItem[7], temItem[2])
+        K3.insert(temItem[7], temItem[3])
+        S4.insert(temItem[7], temItem[4])
+        C5.insert(temItem[7], temItem[5])
         O3 = temItem[6]
+        temCount += 1
 
-    C5 = array(C5).T
+    C5T = array(C5).T
+    C5T = C5T / constFenM
+
+    # for index in range(len(C5)):
+    #     C5[index] = 10 * C5[index] / maxC5
+    # minC5 = abs(min(C5))
+    # maxC5 = abs(max(C5))
+    # if minC5 > maxC5:
+    #     maxC5 = minC5
+
+    # 数值处理
+    # print "B3",parameters[KEY_B3]
+    # print "W3",parameters[KEY_W3]
+    # print "C5",C5[0]
     # 激活
-    Z1 = np.dot(W4, C5) + b4
+    Z1 = np.dot(W4, C5T) + b4
     A1 = sigmoid(Z1)
+    # print "A1", A1[0]
     Z2 = np.dot(W5, A1) + b5
     A2 = softMax(Z2)
 
@@ -380,7 +413,7 @@ def forward_propagation(X, firtstConvCount, secondConvCount, thirdConvCount, for
         "K3": K3,
         "O3": O3,
         "S4": S4,
-        "C5": C5,
+        "C5": C5T,
         "Z1": Z1,
         "A1": A1,
         "Z2": Z2,
@@ -391,6 +424,10 @@ def forward_propagation(X, firtstConvCount, secondConvCount, thirdConvCount, for
 
 def sigmoid(x):
     s = 1 / (1 + np.exp(-x))
+    # if inX>=0:
+    #     return 1.0/(1+exp(-inX))
+    # else:
+    # s = exp(x)/(1+exp(x))
     return s
 
 
@@ -516,7 +553,7 @@ def nn_model(X, Y, YLabel, convSize, firtstConvCount, secondConvCount, thirdConv
     sumX = np.zeros((shape(X)[1], shape(X)[1]))
     for n in range(0, len(X)):
         sumX += X[n]
-    sumX /= len(X)
+    sumX /= (len(X) * 1.0)
     for i in range(0, num_iterations):
         startTime = datetime.datetime.now()
         print "count:", i
@@ -529,13 +566,14 @@ def nn_model(X, Y, YLabel, convSize, firtstConvCount, secondConvCount, thirdConv
         print "backward_propagation:", datetime.datetime.now() - startTime2
         parameters = update_parameters(parameters, grads)
 
-        # predictions = predict(X, Y, YLabel, 5, 6, 16, 120, 84, 2, parameters)
-        # diff = ((Y - predictions) == 0)
-        # print predictions
-        # rightCount = np.dot(np.array([1] * len(Y)), diff)
-        # print rightCount
-        # print (
-        #     'Accuracy: %d' % (float(rightCount) / float(Y.size) * 100) + '%')
+        if i % 10 == 0 or i == 98 or i == 99:
+            predictions = predict(X, Y, YLabel, 5, 6, 16, 120, 84, 2, parameters)
+            diff = ((Y - predictions) == 0)
+            print predictions
+            rightCount = np.dot(np.array([1] * len(Y)), diff)
+            print rightCount
+            print (
+                'Accuracy: %d' % (float(rightCount) / float(Y.size) * 100) + '%')
 
         print "update_parameters:", datetime.datetime.now() - startTime
         # Print the cost every 1000 iterations
@@ -630,18 +668,23 @@ def readParameters():
             break
 
 
-Y, X, YLabel = DataProvider.digitData(True)
-parameters = nn_model(X, Y, YLabel, 5, 6, 16, 120, 84, 2, num_iterations=4, print_cost=True)
+## 计算入口代码
+# Y, X, YLabel = DataProvider.digitData(True)
+# parameters = nn_model(X, Y, YLabel, 5, 6, 16, 120, 84, 2, num_iterations=80, print_cost=True)
+#
+# # 保存 parameters
+# # writeParameters(parameters)
+#
+# Y, X, YLabel = DataProvider.digitData(False)
+# predictions = predict(X, Y, YLabel, 5, 6, 16, 120, 84, 2, parameters)
+#
+# diff = ((Y - predictions) == 0)
+# print predictions
+# rightCount = np.dot(np.array([1] * len(Y)), diff)
+# print rightCount
+# print (
+#     'Accuracy: %d' % (float(rightCount) / float(Y.size) * 100) + '%')
 
-# 保存 parameters
-# writeParameters(parameters)
-
+# 将错误结果文件打印出来
 Y, X, YLabel = DataProvider.digitData(False)
-predictions = predict(X, Y, YLabel, 5, 6, 16, 120, 84, 2, parameters)
-
-diff = ((Y - predictions) == 0)
-print predictions
-rightCount = np.dot(np.array([1] * len(Y)), diff)
-print rightCount
-print (
-    'Accuracy: %d' % (float(rightCount) / float(Y.size) * 100) + '%')
+DataProvider.printWrongDigitClassFile("/Users/zdh/Develepment/Game/machinelearninginaction/Learn/deeplearn/cnn/result")

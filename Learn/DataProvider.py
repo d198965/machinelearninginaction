@@ -11,6 +11,8 @@ import numpy as np
 DIGIT_TRAIN_PATCH = "/Users/zdh/Develepment/Game/machinelearninginaction/Ch02/trainingDigits/"
 DIGIT_TEST_PATCH = "/Users/zdh/Develepment/Game/machinelearninginaction/Ch02/testDigits/"
 
+DIGIT_JUMP_COUNT = 20
+
 
 def digitData(isTraining):
     if isTraining:
@@ -23,7 +25,7 @@ def digitData(isTraining):
     yArray = []
     trainingMat = []
     for i in range(m):
-        if (i % 20 != 0):
+        if (i % DIGIT_JUMP_COUNT != 0):
             continue
         fileNameStr = trainingFileList[i]
         fileStr = fileNameStr.split('.')[0]  # take off .txt
@@ -50,4 +52,23 @@ def readOnDigitFile(fileNameStr):
         for j in range(32):
             oneLine.append(int(lineStr[j]))
         returnMat.append(oneLine)
+    fr.close()
     return returnMat
+
+
+def printWrongDigitClassFile(resultPath):
+    fr = open(resultPath)
+    resultLine = fr.readline()
+    resultArray = resultLine.split(',')
+    trainingFileList = listdir(DIGIT_TEST_PATCH)
+    m = len(trainingFileList)
+    count = 0
+    for i in range(m):
+        if (i % DIGIT_JUMP_COUNT != 0):
+            continue
+        fileNameStr = trainingFileList[i]
+        fileStr = fileNameStr.split('.')[0]  # take off .txt
+        classNumStr = int(fileStr.split('_')[0])
+        if int(resultArray[count]) != classNumStr:
+            print fileNameStr, ":", resultArray[count]
+        count+=1

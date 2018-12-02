@@ -285,22 +285,22 @@ def predict(parameters, X):
     return predictions
 
 
-# X, Y = loadLineData()
-# parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+X, Y = loadLineData()
+parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
 
 # X, Y = loadData()
 # parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
 
-X, Y = readHorese('horseColicTraining.txt')
-parameters = nn_model(X, Y, n_h=30, num_iterations=10000, print_cost=True)
-X, Y = readHorese('horseColicTest.txt')
+# X, Y = readHorese('horseColicTraining.txt')
+# parameters = nn_model(X, Y, n_h=30, num_iterations=10000, print_cost=True)
+# X, Y = readHorese('horseColicTest.txt')
 
 # Plot the decision boundary
 # loadLineData() 和 loadData()可用
-# plt.figure(1)
-# plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
-# plt.title("Decision Boundary for hidden layer size " + str(4))
-# plt.show()
+plt.figure(1)
+plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
+plt.title("Decision Boundary for hidden layer size " + str(4))
+plt.show()
 
 # Print accuracy
 predictions = predict(parameters, X)
