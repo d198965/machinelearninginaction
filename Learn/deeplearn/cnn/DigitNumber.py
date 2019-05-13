@@ -84,14 +84,10 @@ def backward_propagation(parameters, cache, X, Y, YLabel, sumX):
 
     # First, retrieve W1 and W2 from the dictionary "parameters".
     W1 = parameters[KEY_W1]
-    B1 = parameters[KEY_B1]
     W2 = parameters[KEY_W2]
-    B2 = parameters[KEY_B2]
     W3 = parameters[KEY_W3]
-    B3 = parameters[KEY_B3]
     W4 = parameters[KEY_W4]
     W5 = parameters[KEY_W5]
-    b4 = parameters[KEY_B4]
 
     # Retrieve also A1 and A2 from dictionary "cache".
     A1 = cache["A1"]

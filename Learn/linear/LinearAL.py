@@ -44,7 +44,7 @@ def plotLinear(a, b, minX, maxX):
     y = x * a + b
     plt.plot(x, y)
     plt.plot(ox, oy, 'bo')
-    plt.title("图表")
+    plt.title("figure")
     plt.show()
 
 

@@ -7,11 +7,16 @@ from os import listdir
 import matplotlib.pyplot as plt
 from numpy import *
 import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+
 
 DIGIT_TRAIN_PATCH = "/Users/zdh/Develepment/Game/machinelearninginaction/Ch02/trainingDigits/"
 DIGIT_TEST_PATCH = "/Users/zdh/Develepment/Game/machinelearninginaction/Ch02/testDigits/"
 
 DIGIT_JUMP_COUNT = 20
+
+MUSH_ROOMS = "/Users/zdh/Develepment/Game/machinelearninginaction/Learn/mushrooms.csv"
 
 
 def digitData(isTraining):
@@ -71,4 +76,20 @@ def printWrongDigitClassFile(resultPath):
         classNumStr = int(fileStr.split('_')[0])
         if int(resultArray[count]) != classNumStr:
             print fileNameStr, ":", resultArray[count]
-        count+=1
+        count += 1
+
+
+def readMushRooms():
+    mushData = pd.read_csv(MUSH_ROOMS)
+    labelArray = mushData['class'].values
+    dataArray = mushData.drop(['class'],axis=1).values
+    assert len(labelArray) == len(dataArray)
+    labelencoder = LabelEncoder()
+    labelMat = labelencoder.fit_transform(labelArray) * -1.0
+
+    columnsCount = dataArray.shape[1]
+    for index in range(0,columnsCount):
+        dataArray[:,index] = labelencoder.fit_transform(dataArray[:,index]) * float(1.0)
+
+    return labelMat.astype(float), dataArray.astype(float)
+

@@ -285,26 +285,29 @@ def predict(parameters, X):
     return predictions
 
 
-X, Y = loadLineData()
-parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+def abTest():
+    X, Y = loadLineData()
+    parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
 
-# X, Y = loadData()
-# parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+    # X, Y = loadData()
+    # parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
 
-# X, Y = readHorese('horseColicTraining.txt')
-# parameters = nn_model(X, Y, n_h=30, num_iterations=10000, print_cost=True)
-# X, Y = readHorese('horseColicTest.txt')
+    # X, Y = readHorese('horseColicTraining.txt')
+    # parameters = nn_model(X, Y, n_h=30, num_iterations=10000, print_cost=True)
+    # X, Y = readHorese('horseColicTest.txt')
 
-# Plot the decision boundary
-# loadLineData() 和 loadData()可用
-plt.figure(1)
-plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
-plt.title("Decision Boundary for hidden layer size " + str(4))
-plt.show()
+    # Plot the decision boundary
+    # loadLineData() 和 loadData()可用
+    plt.figure(1)
+    plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
+    plt.title("Decision Boundary for hidden layer size " + str(4))
+    plt.show()
 
-# Print accuracy
-predictions = predict(parameters, X)
-print (np.dot(1 - Y, predictions.T))
-print (np.dot(Y, 1 - predictions.T))
-print (
-'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
+    # Print accuracy
+    predictions = predict(parameters, X)
+    print (np.dot(1 - Y, predictions.T))
+    print (np.dot(Y, 1 - predictions.T))
+    print (
+    'Accuracy: %d' % float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
+
+# abTest()

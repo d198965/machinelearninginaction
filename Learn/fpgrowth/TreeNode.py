@@ -9,6 +9,7 @@ class TreeNode:
         self.linkNode = None
         self.children = {}
 
+
     def inc(self, numberOccur):
         self.count = self.count + numberOccur
 
